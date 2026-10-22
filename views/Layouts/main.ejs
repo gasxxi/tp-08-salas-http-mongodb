@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= titulo %></title>
+  <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body>
+  <header class="encabezado">
+    <div class="marca">
+      <span>Sistema de Biblioteca</span>
+      <% if (locals.seccion) { %>
+        <small> — <%= locals.seccion %></small>
+      <% } %>
+    </div>
+    <nav>
+      <a href="/">Inicio</a>
+      <a href="/reservas">Reservas</a>
+      <a href="/reservas/nueva">Nueva Reserva</a>
+      <a href="/estado">Estado API</a>
+    </nav>
+  </header>
+
+  <main class="contenedor">
+    <%- body %>
+  </main>
+
+  <footer class="pie">
+    <p>Reserva de Salas de Estudio &copy; 2026 | ID de Solicitud: <%= solicitudId %></p>
+  </footer>
+</body>
+</html>
