@@ -1,70 +1,80 @@
-const salasPermitidas = ["Sala Norte", "Sala Sur", "Sala Multimedia"];
-const turnosPermitidos = ["Mañana", "Tarde", "Noche"];
+function validarCampos(req, res, next) {
+  const valores = req.body ?? {};
 
-function prepararAreaReservas(_req, res, next) {
-  res.locals.seccion = "Reservas de salas";
-  next();
-}
+  // Rechazar tipos estructurados directos en campos de texto
+  if (
+    typeof valores.estudiante === "object" ||
+    typeof valores.email === "object" ||
+    typeof valores.fecha === "object" ||
+    typeof valores.sala === "object" ||
+    typeof valores.turno === "object"
+  ) {
+    return responderInvalido(req, res, valores, "Los campos deben ser texto.");
+  }
 
-function validarCampos(datos) {
-  const valores = datos ?? {};
   const estudiante = String(valores.estudiante ?? "").trim();
   const email = String(valores.email ?? "").trim();
-  const sala = String(valores.sala ?? "").trim();
   const fecha = String(valores.fecha ?? "").trim();
+  const sala = String(valores.sala ?? "").trim();
   const turno = String(valores.turno ?? "").trim();
-  const personas =
-    typeof valores.personas === "number" ? valores.personas : NaN;
+
+  // Validar 'personas': rechazar booleanos/objetos y admitir número o texto numérico entero
+  if (
+    typeof valores.personas === "boolean" ||
+    typeof valores.personas === "object"
+  ) {
+    return responderInvalido(
+      req,
+      res,
+      valores,
+      "Personas debe ser un número entero entre 1 y 6.",
+    );
+  }
+
+  const personasRaw = String(valores.personas ?? "").trim();
+  const personasNum = Number(personasRaw);
+
+  const esEnteroValido =
+    personasRaw !== "" &&
+    !Number.isNaN(personasNum) &&
+    Number.isInteger(personasNum) &&
+    personasNum >= 1 &&
+    personasNum <= 6;
+
+  const salasPermitidas = ["Sala Norte", "Sala Sur", "Sala Multimedia"];
+  const turnosPermitidos = ["Mañana", "Tarde", "Noche"];
 
   if (
     !estudiante ||
+    !email ||
     !email.includes("@") ||
-    !salasPermitidas.includes(sala) ||
     !fecha ||
+    !salasPermitidas.includes(sala) ||
     !turnosPermitidos.includes(turno) ||
-    !Number.isInteger(personas) ||
-    personas < 1 ||
-    personas > 6
+    !esEnteroValido
   ) {
-    return null;
+    return responderInvalido(req, res, valores, "Revisá los datos enviados.");
   }
 
-  return { estudiante, email, sala, fecha, turno, personas };
-}
+  req.reservaValidada = {
+    estudiante,
+    email,
+    sala,
+    fecha,
+    turno,
+    personas: personasNum,
+  };
 
-function validarReserva(req, res, next) {
-  const datosValidados = validarCampos(req.body);
-
-  if (!datosValidados) {
-    return res.status(400).render("reservas/nueva", {
-      titulo: "Nueva reserva",
-      error:
-        "Por favor revisá los datos. Completá todos los campos correctamente.",
-      valores: req.body ?? {},
-      salasPermitidas,
-      turnosPermitidos,
-    });
-  }
-
-  req.reservaValidada = datosValidados;
   next();
 }
 
-function validarReservaApi(req, res, next) {
-  const datosValidados = validarCampos(req.body);
-
-  if (!datosValidados) {
-    return res.status(400).json({
-      error: "Datos de reserva inválidos o incompletos.",
-    });
+function responderInvalido(req, res, valores, mensaje) {
+  if (req.path.startsWith("/api/")) {
+    return res.status(400).json({ error: mensaje });
   }
-
-  req.reservaValidada = datosValidados;
-  next();
+  return res.status(400).render("reservas/nueva", {
+    titulo: "Nueva reserva",
+    error: mensaje,
+    valores,
+  });
 }
-
-module.exports = {
-  prepararAreaReservas,
-  validarReserva,
-  validarReservaApi,
-};
