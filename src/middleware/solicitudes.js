@@ -13,7 +13,7 @@ function medirDuracion(req, res, next) {
     const milisegundos = Number(process.hrtime.bigint() - inicio) / 1_000_000;
     console.log(
       `[${res.locals.solicitudId}] ${req.method} ${req.originalUrl} ` +
-        `${res.statusCode} ${milisegundos.toFixed(2)} ms`
+        `${res.statusCode} ${milisegundos.toFixed(2)} ms`,
     );
   });
   next();

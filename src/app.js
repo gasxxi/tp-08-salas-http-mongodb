@@ -7,10 +7,7 @@ const {
   medirDuracion,
 } = require("./middleware/solicitudes");
 const { manejarErrores } = require("./middleware/errores");
-const {
-  mostrarInicio,
-  obtenerEstado,
-} = require("./controladores/reservas");
+const { mostrarInicio, obtenerEstado } = require("./controladores/reservas");
 const { crearRouterReservas } = require("./rutas/reservas");
 const { crearRouterReservasApi } = require("./rutas/reservas-api");
 
