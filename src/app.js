@@ -1,52 +1,56 @@
 const express = require("express");
-const path = require("node:path");
-const morgan = require("morgan");
 const expressLayouts = require("express-ejs-layouts");
-
+const morgan = require("morgan");
+const path = require("node:path");
 const {
-  identificarSolicitud,
+  crearIdentificadorSolicitud,
   medirDuracion,
 } = require("./middleware/solicitudes");
+const { manejarErrores } = require("./middleware/errores");
+const {
+  mostrarInicio,
+  obtenerEstado,
+} = require("./controladores/reservas");
 const { crearRouterReservas } = require("./rutas/reservas");
 const { crearRouterReservasApi } = require("./rutas/reservas-api");
-const { manejarErrores } = require("./middleware/errores");
-const controlador = require("./controladores/reservas");
 
-function crearApp({ formatoRegistro }) {
+function crearApp() {
   const app = express();
 
+  // Motor de plantillas y layouts
   app.set("view engine", "ejs");
   app.set("views", path.join(__dirname, "..", "views"));
-  app.use(expressLayouts);
   app.set("layout", "layouts/main");
 
-  app.use(morgan(formatoRegistro));
-  app.use(identificarSolicitud);
+  // Middlewares globales
+  app.use(morgan("dev"));
+  app.use(crearIdentificadorSolicitud());
   app.use(medirDuracion);
+  app.use(expressLayouts);
   app.use(express.static(path.join(__dirname, "..", "public")));
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
-  // Rutas generales
-  app.get("/", controlador.mostrarInicio);
-  app.get("/estado", controlador.obtenerEstado);
+  // Rutas principales y de estado
+  app.get("/", mostrarInicio);
+  app.get("/estado", obtenerEstado);
 
-  // Router HTML y Router API
+  // Routers
   app.use("/reservas", crearRouterReservas());
   app.use("/api/reservas", crearRouterReservasApi());
 
-  // 404
+  // 404 para rutas inexistentes
   app.use((req, res) => {
-    if (req.originalUrl.startsWith("/api/")) {
-      return res.status(404).json({ error: "Ruta de API no encontrada." });
+    if (req.originalUrl?.startsWith("/api/") || req.path?.startsWith("/api/")) {
+      return res.status(404).json({ error: "Ruta no encontrada." });
     }
     res.status(404).render("no-encontrado", {
       titulo: "Página no encontrada",
-      mensaje: "El recurso solicitado no existe.",
+      mensaje: "La dirección solicitada no existe.",
     });
   });
 
-  // Middleware de errores
+  // Middleware global de errores
   app.use(manejarErrores);
 
   return app;

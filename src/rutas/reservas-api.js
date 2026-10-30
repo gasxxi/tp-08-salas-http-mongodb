@@ -1,13 +1,17 @@
 const express = require("express");
-const { validarReservaApi } = require("../middleware/reservas");
-const controlador = require("../controladores/reservas");
+const {
+  listarApi,
+  obtenerPorIdApi,
+  crearApi,
+} = require("../controladores/reservas");
+const { validarReserva } = require("../middleware/reservas");
 
 function crearRouterReservasApi() {
   const router = express.Router();
 
-  router.get("/", controlador.listarApi);
-  router.get("/:id", controlador.obtenerPorIdApi);
-  router.post("/", validarReservaApi, controlador.crearApi);
+  router.get("/", listarApi);
+  router.get("/:id", obtenerPorIdApi);
+  router.post("/", validarReserva, crearApi);
 
   return router;
 }
